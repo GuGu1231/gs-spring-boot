@@ -16,7 +16,7 @@ jobs:
           key: ${{ secrets.KEY }} # 아까 등록한 pem 키
           script: |
             # 1. 프로젝트 폴더로 이동 (폴더명 확인 필요!)
-            cd gs-spring-boot
+            cd gs-spring-boot/complete
 
             # 2. 최신 코드 가져오기
             git pull origin main
