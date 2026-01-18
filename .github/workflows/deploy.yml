@@ -17,17 +17,17 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
-      # 1. Gradle 실행 권한 부여
+      # [수정됨] 로봇은 이미 프로젝트 안에 있으므로 'complete/gradlew'만 찾으면 됨
       - name: Grant execute permission for gradlew
-        run: chmod +x gs-spring-boot/complete/gradlew
+        run: chmod +x complete/gradlew
 
-      # 2. 빌드 (테스트 제외 -x test 옵션 필수!)
+      # [수정됨] 로봇이 빌드할 때 경로 수정
       - name: Build with Gradle
         run: |
-          cd gs-spring-boot/complete
+          cd complete
           ./gradlew clean build -x test
 
-      # 3. AWS 서버로 배포
+      # AWS 서버로 배포 (여기는 경로가 다릅니다!)
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
@@ -38,10 +38,19 @@ jobs:
           timeout: 40m
           command_timeout: 40m
           script: |
+            # AWS 서버에는 폴더가 통째로 있으므로 이 경로가 맞음
             cd gs-spring-boot/complete
+
+            # 최신 코드 받기
             git pull origin main
+
+            # 기존 서버 끄기
             sudo pkill -f 'java -jar' || true
+
+            # 빌드 권한 주기 & 빌드 (테스트 제외)
             chmod +x gradlew
             ./gradlew clean build -x test
+
+            # 실행
             mkdir -p logs
             nohup java -jar build/libs/*SNAPSHOT.jar > logs/nohup.out 2>&1 &
