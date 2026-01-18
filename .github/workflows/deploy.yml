@@ -38,19 +38,17 @@ jobs:
           timeout: 40m
           command_timeout: 40m
           script: |
-            # AWS 서버에는 폴더가 통째로 있으므로 이 경로가 맞음
             cd gs-spring-boot/complete
-
-            # 최신 코드 받기
             git pull origin main
 
             # 기존 서버 끄기
             sudo pkill -f 'java -jar' || true
 
-            # 빌드 권한 주기 & 빌드 (테스트 제외)
+            # 빌드 권한 주기
             chmod +x gradlew
-            ./gradlew clean build -x test
 
-            # 실행
+            # [수정됨] 메모리 절약 모드 (--no-daemon) + 메모리 제한 옵션 추가
+            ./gradlew clean build -x test --no-daemon -Dorg.gradle.jvmargs="-Xmx512m"
+
             mkdir -p logs
             nohup java -jar build/libs/*SNAPSHOT.jar > logs/nohup.out 2>&1 &
