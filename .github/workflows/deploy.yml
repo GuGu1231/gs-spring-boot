@@ -49,9 +49,16 @@ jobs:
           timeout: 40m
           command_timeout: 40m
           script: |
-            sudo pkill -f 'java -jar' || true
+            # 1. 기존 서버 끄기 (강제 종료 옵션 -9 추가)
+            # 좀비 프로세스까지 확실하게 죽입니다.
+            sudo pkill -9 -f 'java -jar' || true
+
+            # 2. 경로 이동
             cd /home/ubuntu/gs-spring-boot/complete/build/libs
             mkdir -p logs
 
-            # [중요] -Xmx512m 옵션 추가됨
+            # 3. 실행 (메모리 제한 512MB)
+            # nohup 실행 후 2초 쉬었다가(sleep 2) 확실하게 퇴장(exit)합니다.
             nohup java -Xmx512m -jar *SNAPSHOT.jar > logs/nohup.out 2>&1 &
+            sleep 2
+            exit 0
