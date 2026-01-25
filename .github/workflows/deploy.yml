@@ -49,16 +49,22 @@ jobs:
           timeout: 40m
           command_timeout: 40m
           script: |
-            # 1. 기존 서버 끄기 (강제 종료 옵션 -9 추가)
-            # 좀비 프로세스까지 확실하게 죽입니다.
+            # 1. 기존 서버 즉시 종료
             sudo pkill -9 -f 'java -jar' || true
 
-            # 2. 경로 이동
+            # 2. [중요] 파일 전송으로 쌓인 캐시 메모리 강제 삭제 (청소)
+            # 이걸 해야 Java가 들어갈 자리가 생깁니다.
+            echo 3 | sudo tee /proc/sys/vm/drop_caches
+
+            # 3. 경로 이동
             cd /home/ubuntu/gs-spring-boot/complete/build/libs
             mkdir -p logs
 
-            # 3. 실행 (메모리 제한 512MB)
-            # nohup 실행 후 2초 쉬었다가(sleep 2) 확실하게 퇴장(exit)합니다.
-            nohup java -Xmx384m -jar *SNAPSHOT.jar > logs/nohup.out 2>&1 &
+            # 4. [수정됨] 메모리 256MB로 더 줄임 (t3.micro 최적화)
+            # -Xms128m : 시작할 때 128MB만 씀
+            # -Xmx256m : 최대 256MB까지만 씀
+            nohup java -Xms128m -Xmx256m -jar *SNAPSHOT.jar > logs/nohup.out 2>&1 &
+
+            # 5. 안전하게 대기 후 종료
             sleep 2
             exit 0
