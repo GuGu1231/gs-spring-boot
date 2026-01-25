@@ -20,13 +20,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x complete/gradlew
 
-      # 1. 여기서(GitHub 컴퓨터) 빌드를 다 끝냅니다.
+      # 1. GitHub에서 빌드 (서버 아님)
       - name: Build with Gradle
         run: |
           cd complete
           ./gradlew clean build -x test
 
-      # 2. [추가됨] 빌드된 결과물(JAR 파일)만 서버로 "배달"합니다.
+      # 2. 결과물(JAR) 서버로 배달
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@master
         with:
@@ -34,14 +34,11 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           port: 22
-          # GitHub에서 만든 jar 파일을
           source: "complete/build/libs/*.jar"
-          # 서버의 이 폴더로 복사합니다
           target: "/home/ubuntu/gs-spring-boot"
-          # (옵션) 불필요한 경로 제거
           strip_components: 0
 
-      # 3. 서버는 이제 "요리(빌드)"를 안 하고 "서빙(실행)"만 합니다.
+      # 3. 서버에서 실행 (메모리 제한 추가됨!)
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
@@ -49,16 +46,12 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           port: 22
+          timeout: 40m
+          command_timeout: 40m
           script: |
-            # 기존에 돌던 서버 끄기
             sudo pkill -f 'java -jar' || true
-
-            # 업로드된 폴더로 이동 (scp로 전송된 위치)
             cd /home/ubuntu/gs-spring-boot/complete/build/libs
-
-            # 실행 로그 폴더 생성
             mkdir -p logs
 
-            # 실행! (빌드 과정 없이 바로 실행하므로 1초면 됩니다)
-            # jar 파일 이름은 상황에 맞게 자동으로 잡히도록 * 사용
-            nohup java -jar *SNAPSHOT.jar > logs/nohup.out 2>&1 &
+            # [중요] -Xmx512m 옵션 추가됨
+            nohup java -Xmx512m -jar *SNAPSHOT.jar > logs/nohup.out 2>&1 &
