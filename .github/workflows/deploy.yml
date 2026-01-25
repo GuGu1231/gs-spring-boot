@@ -49,22 +49,11 @@ jobs:
           timeout: 40m
           command_timeout: 40m
           script: |
-            # 1. 기존 서버 즉시 종료
-            sudo pkill -9 -f 'java -jar' || true
-
-            # 2. [중요] 파일 전송으로 쌓인 캐시 메모리 강제 삭제 (청소)
-            # 이걸 해야 Java가 들어갈 자리가 생깁니다.
-            echo 3 | sudo tee /proc/sys/vm/drop_caches
-
-            # 3. 경로 이동
+            # 1. 작업 폴더 이동
             cd /home/ubuntu/gs-spring-boot/complete/build/libs
-            mkdir -p logs
 
-            # 4. [수정됨] 메모리 256MB로 더 줄임 (t3.micro 최적화)
-            # -Xms128m : 시작할 때 128MB만 씀
-            # -Xmx256m : 최대 256MB까지만 씀
-            nohup java -Xms128m -Xmx256m -jar *SNAPSHOT.jar > logs/nohup.out 2>&1 &
+            # 2. 파일 이름 변경
+            mv *SNAPSHOT.jar application.jar
 
-            # 5. 안전하게 대기 후 종료
-            sleep 2
-            exit 0
+            # 3. 서비스 재시작
+            sudo systemctl restart myspring
