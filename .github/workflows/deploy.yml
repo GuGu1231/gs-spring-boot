@@ -59,6 +59,6 @@ jobs:
 
             # 3. 실행 (메모리 제한 512MB)
             # nohup 실행 후 2초 쉬었다가(sleep 2) 확실하게 퇴장(exit)합니다.
-            nohup java -Xmx512m -jar *SNAPSHOT.jar > logs/nohup.out 2>&1 &
+            nohup java -Xmx384m -jar *SNAPSHOT.jar > logs/nohup.out 2>&1 &
             sleep 2
             exit 0
